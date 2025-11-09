@@ -3,88 +3,73 @@ package tests;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
-import java.net.URI;
+import java.net.URL;
+import java.time.Duration;
 
 public class GoogleTitleTest {
 
-    private RemoteWebDriver driver;
+    private static final ThreadLocal<RemoteWebDriver> TL_DRIVER = new ThreadLocal<>();
 
-    @Parameters({"browser"})
+    private static RemoteWebDriver driver() {
+        return TL_DRIVER.get();
+    }
+
+    @Parameters({"browser", "gridUrl"})
     @BeforeMethod
-    public void setUp(@Optional("chrome") String browser) throws Exception {
-        String gridUrl = System.getenv().getOrDefault("GRID_URL", "http://13.235.140.25:4444/wd/hub");
+    public void setUp(
+            @Optional("chrome") String browser,
+            @Optional("http://localhost:4444/wd/hub") String gridUrlFromXml
+    ) throws Exception {
 
-        MutableCapabilities caps;
-        switch (browser.toLowerCase()) {
-            case "firefox":
-                caps = new org.openqa.selenium.firefox.FirefoxOptions();
-                break;
-            case "chrome":
-            default:
-                caps = new org.openqa.selenium.chrome.ChromeOptions();
-                break;
+        // Priority: -DGRID_URL (mvn), then $GRID_URL (env), then testng.xml param, then localhost
+        String gridUrl = System.getProperty(
+                "GRID_URL",
+                System.getenv().getOrDefault("GRID_URL", gridUrlFromXml)
+        );
+
+        MutableCapabilities caps = switch (browser.toLowerCase()) {
+            case "firefox" -> new FirefoxOptions().addArguments("-headless");     // remove if you want visible
+            case "chrome"  -> new ChromeOptions().addArguments("--headless=new"); // remove if you want visible
+            default        -> new ChromeOptions().addArguments("--headless=new");
+        };
+
+        // Useful stability flags for containers
+        if (caps instanceof ChromeOptions ch) {
+            ch.addArguments("--no-sandbox", "--disable-dev-shm-usage");
         }
 
-        // Example: run headless inside containers (optional)
-        if (caps instanceof org.openqa.selenium.chrome.ChromeOptions chrome) {
-            chrome.addArguments("--headless=new");
-        } else if (caps instanceof org.openqa.selenium.firefox.FirefoxOptions ff) {
-            ff.addArguments("-headless");
-        }
-
-        driver = new RemoteWebDriver(URI.create(gridUrl).toURL(), (Capabilities) caps);
+        RemoteWebDriver drv = new RemoteWebDriver(new URL(gridUrl), (Capabilities) caps);
+        drv.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+        drv.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
+        TL_DRIVER.set(drv);
     }
 
     @Test
     public void googleTitleShouldContainGoogle() {
-        driver.get("https://www.google.com/");
-        String title = driver.getTitle();
+        driver().get("https://www.google.com/");
+        String title = driver().getTitle();
         Assert.assertTrue(title.toLowerCase().contains("google"), "Title was: " + title);
     }
 
-    @Test
-    public void googleTitleShouldContainGoogl1e() {
-        driver.get("https://www.google.com/");
-        String title = driver.getTitle();
-        Assert.assertTrue(title.toLowerCase().contains("google"), "Title was: " + title);
-    }
-    @Test
-    public void googleTitleShouldContainGoogle2() {
-        driver.get("https://www.google.com/");
-        String title = driver.getTitle();
-        Assert.assertTrue(title.toLowerCase().contains("google"), "Title was: " + title);
-    }
-    @Test
-    public void googleTitleShouldContainGoogl3e() {
-        driver.get("https://www.google.com/");
-        String title = driver.getTitle();
-        Assert.assertTrue(title.toLowerCase().contains("google"), "Title was: " + title);
-    }
-    @Test
-    public void googleTitleShouldContainGoogle4() {
-        driver.get("https://www.google.com/");
-        String title = driver.getTitle();
-        Assert.assertTrue(title.toLowerCase().contains("google"), "Title was: " + title);
-    }
-    @Test
-    public void googleTitleShouldContainGoogle5() {
-        driver.get("https://www.google.com/");
-        String title = driver.getTitle();
-        Assert.assertTrue(title.toLowerCase().contains("google"), "Title was: " + title);
-    }
-    @Test
-    public void googleTitleShouldContainGoogle6() {
-        driver.get("https://www.google.com/");
-        String title = driver.getTitle();
-        Assert.assertTrue(title.toLowerCase().contains("google"), "Title was: " + title);
-    }
-
+    // Keep or remove these copies as you like for parallelism
+    @Test public void googleTitleShouldContainGoogl1e() { googleTitleShouldContainGoogle(); }
+    @Test public void googleTitleShouldContainGoogle2() { googleTitleShouldContainGoogle(); }
+    @Test public void googleTitleShouldContainGoogl3e() { googleTitleShouldContainGoogle(); }
+    @Test public void googleTitleShouldContainGoogle4() { googleTitleShouldContainGoogle(); }
+    @Test public void googleTitleShouldContainGoogle5() { googleTitleShouldContainGoogle(); }
+    @Test public void googleTitleShouldContainGoogle6() { googleTitleShouldContainGoogle(); }
 
     @AfterMethod(alwaysRun = true)
     public void tearDown() {
-        if (driver != null) driver.quit();
+        RemoteWebDriver d = driver();
+        if (d != null) {
+            d.quit();
+            TL_DRIVER.remove();
+        }
     }
 }
