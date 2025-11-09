@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   hub:
     image: selenium/hub:4.25.0
@@ -9,50 +7,24 @@ services:
     environment:
       - SE_RELAX_CHECKS=true
       - SE_REJECT_UNSUPPORTED_CAPS=false
-    networks: [grid]
 
   chrome:
-    image: selenium/node-chrome:4.23.0
+    image: selenium/node-chrome:4.25.0
     shm_size: 2g
     depends_on: [hub]
     environment:
       - SE_EVENT_BUS_HOST=hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - SE_NODE_MAX_SESSIONS=2
-      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
-    volumes:
-      - /dev/shm:/dev/shm
-    networks: [grid]
+      # Optional: control slots per node (default 1)
+      # - SE_NODE_MAX_SESSIONS=1
 
   firefox:
-    image: selenium/node-firefox:4.23.0
+    image: selenium/node-firefox:4.25.0
     shm_size: 2g
     depends_on: [hub]
     environment:
       - SE_EVENT_BUS_HOST=hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - SE_NODE_MAX_SESSIONS=2
-      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
-    volumes:
-      - /dev/shm:/dev/shm
-    networks: [grid]
-
-  tests:
-    image: maven:3.9-eclipse-temurin-17
-    container_name: tests-runner
-    depends_on: [hub, chrome, firefox]
-    working_dir: /usr/src/app
-    volumes:
-      - ./:/usr/src/app
-      - ~/.m2:/root/.m2
-    environment:
-      - GRID_URL=http://hub:4444/wd/hub
-      - BROWSER=chrome         # chrome|firefox
-    command: ["mvn", "-q", "test"]
-    networks: [grid]
-
-networks:
-  grid:
-    driver: bridge
+      # - SE_NODE_MAX_SESSIONS=1
