@@ -12,7 +12,7 @@ import java.net.URL;
 import java.time.Duration;
 
 public class GoogleTitleTest {
-
+  // setup thread safety
     private static final ThreadLocal<RemoteWebDriver> TL_DRIVER = new ThreadLocal<>();
 
     private static RemoteWebDriver driver() {
