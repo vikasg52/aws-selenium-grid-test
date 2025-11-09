@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="All Test Suite">
+    <test verbose="2" preserve-order="true" name="C:/Users/HP/Documents/testng-browserstack-master/src/test/java/com/browserstack/GoogleTitleTest.java">
+        <classes>
+            <class name="tests.GoogleTitleTest">
+                <methods>
+                    <include name="googleTitleShouldContainGoogle"/>
+                    <include name="googleTitleShouldContainGoogl1e"/>
+                    <include name="googleTitleShouldContainGoogle2"/>
+                    <include name="googleTitleShouldContainGoogl3e"/>
+                    <include name="googleTitleShouldContainGoogle4"/>
+                    <include name="googleTitleShouldContainGoogle5"/>
+                    <include name="googleTitleShouldContainGoogle6"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

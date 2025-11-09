@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="GridSuite" parallel="tests" thread-count="3">
+    <test name="GridTests">
+        <parameter name="browser" value="${BROWSER}"/>
+        <classes>
+            <class name="test."/>
+        </classes>
+    </test>
+</suite>

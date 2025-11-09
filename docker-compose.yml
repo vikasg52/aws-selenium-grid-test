@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  hub:
+    image: selenium/hub:4.23.0
+    container_name: selenium-hub
+    ports:
+      - "4444:4444"        # Grid UI & WebDriver endpoint
+    environment:
+      - SE_OPTS=--relax-checks true
+    networks: [grid]
+
+  chrome:
+    image: selenium/node-chrome:4.23.0
+    shm_size: 2g
+    depends_on: [hub]
+    environment:
+      - SE_EVENT_BUS_HOST=hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+    volumes:
+      - /dev/shm:/dev/shm
+    networks: [grid]
+
+  firefox:
+    image: selenium/node-firefox:4.23.0
+    shm_size: 2g
+    depends_on: [hub]
+    environment:
+      - SE_EVENT_BUS_HOST=hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+    volumes:
+      - /dev/shm:/dev/shm
+    networks: [grid]
+
+  tests:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: tests-runner
+    depends_on: [hub, chrome, firefox]
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+      - ~/.m2:/root/.m2
+    environment:
+      - GRID_URL=http://hub:4444/wd/hub
+      - BROWSER=chrome         # chrome|firefox
+    command: ["mvn", "-q", "test"]
+    networks: [grid]
+
+networks:
+  grid:
+    driver: bridge
